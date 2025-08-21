@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Quest</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="game-board">
+        <div id="enemy-area">
+            <div id="enemy-info">
+                <h2 id="enemy-name">Nome do Inimigo</h2>
+                <div class="hp-bar-container">
+                    <div id="enemy-hp-bar" class="hp-bar"></div>
+                    <span id="enemy-hp-text">100 / 100</span>
+                </div>
+            </div>
+            <div id="enemy-intent">
+                </div>
+        </div>
+
+        <div id="play-area">
+            <h3>Pilha de Execução</h3>
+            <div id="execution-stack" class="card-container">
+                </div>
+        </div>
+
+        <div id="player-area">
+            <div id="player-info">
+                <h2>Você</h2>
+                <div class="hp-bar-container">
+                    <div id="player-hp-bar" class="hp-bar"></div>
+                    <span id="player-hp-text">50 / 50</span>
+                </div>
+                <div id="player-memory">
+                    Memória: <span id="memory-text">3 / 3</span>
+                </div>
+            </div>
+            <div id="player-hand" class="card-container">
+                </div>
+            <div id="deck-info">
+                <button id="end-turn-btn">Finalizar Turno</button>
+                <p>Deck: <span id="deck-count">30</span></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="victory-screen" class="hidden">
+        <div class="modal-content">
+            <h2 id="victory-title">Inimigo Derrotado!</h2>
+            <p id="score-display"></p>
+            <div id="special-reward-display" class="hidden">
+                <h4>Recompensa Rara!</h4>
+                <p id="reward-text"></p>
+                <button id="add-upgrade-btn" class="hidden">Adicionar ao Deck</button>
+            </div>
+            <div class="modal-buttons">
+                <button id="continue-btn">Continuar</button>
+                <button id="exit-btn">Sair e Ver Pontuação</button>
+                <button id="restart-btn" class="hidden">Jogar Novamente</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
