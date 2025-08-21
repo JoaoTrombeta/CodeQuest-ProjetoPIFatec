@@ -1,161 +1,13 @@
+
 document.addEventListener('DOMContentLoaded', () => {
     // --- 1. DEFINIÇÃO DE DADOS EXPANDIDA ---
+
     const cardLibrary = {
         'attack_5': { id: 'attack_5', name: 'Patch Rápido', cost: 1, type: 'action', value: 5, description: 'Causa 5 de dano.' },
         'attack_12': { id: 'attack_12', name: 'Refatoração Agressiva', cost: 2, type: 'action', value: 12, description: 'Causa 12 de dano.' },
         'defend_8': { id: 'defend_8', name: 'Firewall Básico', cost: 1, type: 'action', value: 8, description: 'Ganha 8 de bloqueio.' },
-        'defend_15': { id: 'defend_15', name: 'Firewall Avançado', cost: 2, type: 'action', value: 15, description: 'Ganha 15 de bloqueio.' },
+        'defend_15': { id: 'defend_20', name: 'Firewall Avançado', cost: 2, type: 'action', value: 20, description: 'Ganha 20 de bloqueio.' },
         'exit_process': { id: 'exit_process', name: 'Sair do Processo', cost: 1, type: 'utility', description: 'Esquiva de todos os ataques neste turno.' },
-        'mem_upgrade': { id: 'mem_upgrade', name: 'Overclock de RAM', cost: 1, type: 'permanent_upgrade', description: 'Aumenta sua Memória Máxima em 1 a 3 pontos. Esta carta é removida do jogo após o uso.' },
-        // NOVA CARTA DE CURA
-        'heal_structural': { id: 'heal_structural', name: 'Correção Estrutural', cost: 2, type: 'utility', description: 'Recupera de 3 a 8 pontos de vida.'}
-    };
-
-    const enemyList = [ /* ... (sem alterações aqui) ... */ ];
-    let gameState;
-
-    // --- 2. ELEMENTOS DO DOM --- (sem alterações aqui)
-
-    // --- 3. FUNÇÕES PRINCIPAIS DO JOGO ---
-    function initializeGame() {
-        gameState = {
-            player: {
-                hp: 50, maxHp: 50, memory: 0, maxMemory: 3, block: 0,
-                deck: [], hand: [], discard: [], exhausted: [],
-                status: { isDodging: false }
-            },
-            currentEnemyIndex: 0, cardsPlayedCount: 0, turn: 0
-        };
-        // DECK INICIAL REBALANCEADO
-        gameState.player.deck = [
-            'attack_5', 'attack_5', 'attack_5', 'attack_5', 'attack_5','attack_5', 'attack_5', 'attack_5', 'attack_5', 'attack_5',
-            'defend_8', 'defend_8', 'defend_8', 'defend_8',
-            'attack_12', 'defend_15',
-            'exit_process',     // Apenas uma cópia, tornando-a rara
-            'heal_structural'   // Apenas uma cópia, tornando-a rara
-        ];
-        shuffleDeck(gameState.player.deck);
-        loadEnemy();
-        startTurn();
-        // ... (resto da função sem alterações)
-    }
-    
-    // ... (loadEnemy sem alterações) ...
-
-    function startTurn() {
-        gameState.turn++;
-        gameState.player.memory += gameState.player.maxMemory;
-        const memoryCap = 10 + gameState.turn;
-        if (gameState.player.memory > memoryCap) { gameState.player.memory = memoryCap; }
-        gameState.player.block = 0;
-        gameState.player.status.isDodging = false;
-        gameState.executionStack = [];
-        drawCards(5);
-        updateUI();
-    }
-
-    // ... (endTurn sem alterações) ...
-
-    function executePlayerActions() {
-        for (const card of gameState.executionStack) {
-            if (card.type === 'action') {
-                if (card.name.includes('Patch') || card.name.includes('Refatoração')) { gameState.enemy.hp -= card.value; } 
-                else if (card.name.includes('Firewall')) { gameState.player.block += card.value; }
-            } 
-            else if (card.type === 'utility') {
-                if (card.id === 'exit_process') { gameState.player.status.isDodging = true; }
-                // LÓGICA DA NOVA CARTA DE CURA
-                if (card.id === 'heal_structural') {
-                    const healAmount = Math.floor(Math.random() * 6) + 3; // Cura de 3 a 8
-                    gameState.player.hp += healAmount;
-                    // Garante que a vida não ultrapasse o máximo
-                    if(gameState.player.hp > gameState.player.maxHp) {
-                        gameState.player.hp = gameState.player.maxHp;
-                    }
-                }
-            } 
-            else if (card.type === 'permanent_upgrade') {
-                const memoryBoost = Math.floor(Math.random() * 3) + 1;
-                gameState.player.maxMemory += memoryBoost;
-            }
-        }
-    }
-    
-    // ... (executeEnemyAction, checkGameEnd, e outras funções auxiliares sem alterações até renderCards) ...
-    
-    // --- FUNÇÕES DE INTERAÇÃO COM CARTAS ---
-    
-    function playCard(card) {
-        if (gameState.player.memory >= card.cost) {
-            gameState.player.memory -= card.cost;
-            gameState.cardsPlayedCount++;
-            const cardIndex = gameState.player.hand.findIndex(c => c.id === card.id);
-            // Pega a carta exata da mão e a remove
-            const [playedCard] = gameState.player.hand.splice(cardIndex, 1);
-            gameState.executionStack.push(playedCard);
-            updateUI();
-        } else {
-            alert("Memória insuficiente!");
-        }
-    }
-
-    // NOVA FUNÇÃO PARA DESFAZER A JOGADA
-    function unplayCard(cardIndex) {
-        // Pega a carta da pilha de execução e a remove
-        const [cardToReturn] = gameState.executionStack.splice(cardIndex, 1);
-        
-        // Devolve a carta para a mão do jogador
-        gameState.player.hand.push(cardToReturn);
-
-        // Retorna a memória gasta
-        gameState.player.memory += cardToReturn.cost;
-        
-        // Decrementa o contador de cartas jogadas
-        gameState.cardsPlayedCount--;
-
-        // Atualiza a interface
-        updateUI();
-    }
-
-    // --- ATUALIZAÇÃO DA INTERFACE ---
-
-    // ... (updateUI sem alterações) ...
-
-    function renderCards(container, cards, isPlayerHand) {
-        container.innerHTML = '';
-        // Passamos o índice para a função de callback
-        cards.forEach((card, index) => {
-            const cardEl = document.createElement('div');
-            cardEl.className = 'card';
-            cardEl.innerHTML = `<div class="card-name">${card.name}</div><div class="card-cost">${card.cost}</div><div class="card-description">${card.description}</div>`;
-            
-            // ALTERADO: Adiciona a função correta dependendo de onde a carta está
-            if (isPlayerHand) {
-                // Se está na mão, a função é playCard
-                cardEl.onclick = () => playCard(card);
-            } else {
-                // Se está na pilha de execução, a função é unplayCard, passando o índice
-                cardEl.onclick = () => unplayCard(index);
-            }
-            container.appendChild(cardEl);
-        });
-    }
-
-    // --- 7. INICIALIZAÇÃO E EVENT LISTENERS ---
-    // (O resto do arquivo não precisa de alterações)
-});
-// COPIE E COLE O RESTO DO SEU ARQUIVO JS A PARTIR DAQUI
-// ... (O código restante, como initializeGame() no final, permanece o mesmo)
-
-document.addEventListener('DOMContentLoaded', () => {
-    // --- 1. DEFINIÇÃO DE DADOS EXPANDIDA ---
-
-    const cardLibrary = {
-        'attack_5': { id: 'attack_5', name: 'Patch Rápido', cost: 1, type: 'action', value: 5, description: 'Causa 5 de dano.' },
-        'attack_12': { id: 'attack_12', name: 'Refatoração Agressiva', cost: 2, type: 'action', value: 12, description: 'Causa 12 de dano.' },
-        'defend_8': { id: 'defend_8', name: 'Firewall Básico', cost: 1, type: 'action', value: 8, description: 'Ganha 8 de bloqueio.' },
-        'defend_15': { id: 'defend_15', name: 'Firewall Avançado', cost: 2, type: 'action', value: 15, description: 'Ganha 15 de bloqueio.' },
-        'exit_process': { id: 'exit_process', name: 'Sair do Processo', cost: 1, type: 'utility', description: 'Esquiva de todos os ataques inimigos neste turno.' },
         'mem_upgrade': { id: 'mem_upgrade', name: 'Overclock de RAM', cost: 1, type: 'permanent_upgrade', description: 'Aumenta sua Memória Máxima em 1 a 3 pontos. Esta carta é removida do jogo após o uso.' }
     };
 
@@ -196,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             currentEnemyIndex: 0, cardsPlayedCount: 0, turn: 0 // Turno começa em 0 para a lógica funcionar
         };
-        gameState.player.deck = [ 'attack_5', 'attack_5', 'attack_5', 'attack_5', 'defend_8', 'defend_8', 'defend_8', 'defend_15', 'exit_process', 'attack_12' ];
+        gameState.player.deck = [ 'attack_5', 'attack_5', 'attack_5', 'attack_5', 'defend_8', 'defend_8', 'defend_8', 'defend_20', 'exit_process', 'attack_12' ];
         shuffleDeck(gameState.player.deck);
         loadEnemy();
         startTurn();
@@ -383,6 +235,23 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             alert("Memória insuficiente!");
         }
+    }
+
+    function unplayCard(cardIndex) {
+        // Pega a carta da pilha de execução e a remove
+        const [cardToReturn] = gameState.executionStack.splice(cardIndex, 1);
+        
+        // Devolve a carta para a mão do jogador
+        gameState.player.hand.push(cardToReturn);
+
+        // Retorna a memória gasta
+        gameState.player.memory += cardToReturn.cost;
+        
+        // Decrementa o contador de cartas jogadas
+        gameState.cardsPlayedCount--;
+
+        // Atualiza a interface
+        updateUI();
     }
 
     // --- 6. FUNÇÃO DE ATUALIZAÇÃO DA INTERFACE (UI) ---
