@@ -1,0 +1,309 @@
+:root {
+    --bg: #f2fbff;
+    --card: #ffffff;
+    --accent: #00a3ff;
+    --p1: #ffdede;
+    --p2: #e6f7ff;
+    --text: #113;
+}
+
+* {
+    box-sizing: border-box;
+    font-family: Inter, system-ui, Arial, sans-serif
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text)
+}
+
+.top {
+    padding: 18px 20px;
+    background: linear-gradient(90deg, var(--accent)22, transparent);
+}
+
+.top h1 {
+    margin: 0;
+    font-size: 20px
+}
+
+.top .subtitle {
+    margin: 6px 0 0;
+    color: #355
+}
+
+
+.board {
+    display: grid;
+    grid-template-columns: 1fr 360px 1fr;
+    gap: 16px;
+    max-width: 1100px;
+    margin: 18px auto;
+    padding: 8px
+}
+
+.player {
+    background: var(--card);
+    padding: 10px;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06)
+}
+
+.banner {
+    padding: 8px;
+    border-radius: 8px;
+    color: #222;
+    font-weight: 700;
+    margin-bottom: 8px
+}
+
+.banner.p1 {
+    background: linear-gradient(90deg, #fff0f0, #ffdede)
+}
+
+.banner.p2 {
+    background: linear-gradient(90deg, #f0fbff, #e6f7ff)
+}
+
+.status {
+    display: flex;
+    gap: 12px;
+    font-weight: 600;
+    margin-bottom: 10px
+}
+
+.status .hp {
+    color: #c22
+}
+
+.status .energy {
+    color: #06c
+}
+
+.zone {
+    margin-top: 8px
+}
+
+.hand {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 68px
+}
+
+.prog {
+    display: flex;
+    gap: 8px;
+    min-height: 56px;
+    padding: 8px;
+    border-radius: 8px;
+    background: #fbffff;
+    border: 2px dashed #d3f0ff
+}
+
+
+.card {
+    min-width: 86px;
+    padding: 8px;
+    border-radius: 8px;
+    background: #fff;
+    border: 1px solid #e6f0f8;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.04);
+    font-weight: 700
+}
+
+.card small {
+    display: block;
+    font-weight: 400;
+    color: #667;
+    font-size: 12px
+}
+
+
+.center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px
+}
+
+.vs {
+    font-size: 36px;
+    font-weight: 800;
+    color: #666
+}
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center
+}
+
+.controls button {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 0;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer
+}
+
+#turnLabel {
+    font-weight: 700
+}
+
+
+.logbox {
+    width: 320px
+}
+
+.log {
+    height: 300px;
+    overflow: auto;
+    background: #fff;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #e7f5ff
+}
+
+.log div {
+    margin-bottom: 6px;
+    font-size: 14px
+}
+
+
+.foot {
+    text-align: center;
+    padding: 8px;
+    color: #445
+}
+
+.player {
+    transition: filter 0.5s ease;
+}
+
+.player .status-bar {
+    transition: visibility 0.3s ease, opacity 0.3s ease;
+}
+
+.player[style*="blur"] {
+    opacity: 0.4;
+}
+
+
+@media(max-width:1000px) {
+    .board {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ====== ACESSIBILIDADE ====== */
+#accessibilitySwitch {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 6px 10px;
+  background: #444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 1000;
+}
+
+#accessibilitySwitch.active {
+  background: #2a8;
+}
+
+/* Destaque para foco via TAB */
+.card:focus,
+button:focus {
+  outline: 3px solid #4caf50;
+  outline-offset: 3px;
+}
+
+/* Efeito de desfoque e bloqueio */
+.blurred {
+  filter: blur(4px);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* Transições suaves */
+.player {
+  transition: filter 0.4s ease, opacity 0.4s ease;
+}
+
+/* Contraste melhorado */
+.status,
+.controls,
+.logbox {
+  color: #000;
+}
+
+/* Ocultar elementos temporariamente */
+.hidden {
+  display: none !important;
+}
+
+
+/* ======= feedback visual de foco/hover/seleção ======= */
+.card.focused {
+  outline: 3px solid #4caf50;
+  outline-offset: 3px;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+}
+
+.card.selected {
+  border: 2px solid #0b76ff;
+  background: linear-gradient(180deg,#f0fbff,#fff);
+  transform: translateY(-2px) scale(1.02);
+}
+
+/* caixa de preview (estilização extra) */
+#cardPreviewBox {
+  font-size: 14px;
+  color: #123;
+}
+
+.card.in-prog {
+  background: linear-gradient(180deg, #fffdf5, #fff6e0);
+  border: 2px dashed #ffa726;
+}
+
+.energy-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #0078ff;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.card {
+  position: relative; /* necessário para posicionar a bolinha dentro */
+}
+
+.energy-total {
+  margin-top: 6px;
+  text-align: right;
+  font-weight: bold;
+  color: #444;
+}
