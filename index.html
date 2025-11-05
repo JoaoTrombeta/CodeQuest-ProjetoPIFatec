@@ -1,70 +1,157 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Quest</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <title>Cod&Cards</title>
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    /* Efeitos visuais da alternância de turno */
+    .player {
+      transition: filter 0.4s ease, opacity 0.4s ease;
+    }
+    .blurred {
+      filter: blur(10px);
+      opacity: 0.4;
+      pointer-events: none;
+    }
+    .status-bar {
+      transition: visibility 0.3s ease, opacity 0.3s ease;
+    }
+    .status-bar.hidden {
+      visibility: hidden;
+      opacity: 0;
+    }
+  </style>
 </head>
+
 <body>
+  <header class="top" role="banner">
+    <h1 tabindex="0">Cod&Cards</h1>
+    <p class="subtitle" tabindex="0">
+      Monte sequências de "código" com cartas para atacar, defender e curar — tudo em português claro.
+    </p>
 
-    <div id="game-board">
-        <div id="enemy-area">
-            <div id="enemy-info">
-                <h2 id="enemy-name">Nome do Inimigo</h2>
-                <div class="hp-bar-container">
-                    <div id="enemy-hp-bar" class="hp-bar"></div>
-                    <span id="enemy-hp-text">100 / 100</span>
-                </div>
-            </div>
-            <div id="enemy-intent">
-                </div>
-        </div>
+    <!-- 🔊 Botão para ativar modo acessível -->
+    <button id="accessibilitySwitch" aria-pressed="false" aria-label="Ativar modo acessível">
+      ♿ Acessibilidade: OFF
+    </button>
+  </header>
 
-        <div id="play-area">
-            <h3>Pilha de Execução</h3>
-            <div id="execution-stack" class="card-container">
-                </div>
-        </div>
+  <main class="board" role="main">
+    <section class="player" id="player1" aria-label="Área do Jogador 1">
+      <div class="banner p1" tabindex="0">Jogador 1</div>
+      <div class="status">
+        <div class="hp" tabindex="0">HP: <span id="hp1">20</span></div>
+        <div class="energy" tabindex="0">Energia: <span id="en1">3</span></div>
+      </div>
 
-        <div id="player-area">
-            <div id="player-info">
-                <h2>Você</h2>
-                <div class="hp-bar-container">
-                    <div id="player-hp-bar" class="hp-bar"></div>
-                    <span id="player-hp-text">50 / 50</span>
-                </div>
-                <div id="player-memory">
-                    Memória: <span id="memory-text"></span>
-                </div>
-            </div>
-            <div id="player-hand" class="card-container">
-                </div>
-            <div id="deck-info">
-                <button id="end-turn-btn">Finalizar Turno</button>
-                <p>Deck: <span id="deck-count">30</span></p>
-            </div>
-        </div>
-    </div>
+      <div class="zone">
+        <h3 tabindex="0">Mão</h3>
+        <div id="hand1" class="hand" role="list" aria-label="Cartas do Jogador 1"></div>
+      </div>
 
-    <div id="victory-screen" class="hidden">
-        <div class="modal-content">
-            <h2 id="victory-title">Inimigo Derrotado!</h2>
-            <p id="score-display"></p>
-            <div id="special-reward-display" class="hidden">
-                <h4>Recompensa Rara!</h4>
-                <p id="reward-text"></p>
-                <button id="add-upgrade-btn" class="hidden">Adicionar ao Deck</button>
-            </div>
-            <div class="modal-buttons">
-                <button id="continue-btn">Continuar</button>
-                <button id="exit-btn">Sair e Ver Pontuação</button>
-                <button id="restart-btn" class="hidden">Jogar Novamente</button>
-            </div>
-        </div>
-    </div>
+      <div class="zone">
+        <h3 tabindex="0">Área de código (máx 3 cartas)</h3>
+        <div id="prog1" class="prog" role="list" aria-label="Área de código do Jogador 1"></div>
+        <div id="energy1" class="energy-total"></div>
+      </div>
+    </section>
 
-    <!-- <script src="script.js"></script> -->
-    <script src="cards.js"></script>
+    <section class="center" aria-label="Centro do campo">
+      <div class="vs" tabindex="0">VS</div>
+      <div class="controls" role="region" aria-label="Controles do jogo">
+        <div id="turnLabel" tabindex="0">Turno: Jogador 1</div>
+        <button id="runBtn" aria-label="Executar código">Executar Código</button>
+        <button id="clearBtn" aria-label="Limpar área de código">Limpar Área</button>
+        <button id="endBtn" aria-label="Passar turno">Passar Turno</button>
+      </div>
+
+      <div class="logbox" role="log" aria-live="polite">
+        <h3 tabindex="0">Registro (interpretação)</h3>
+        <div id="log" class="log"></div>
+      </div>
+    </section>
+
+    <section class="player" id="player2" aria-label="Área do Jogador 2">
+      <div class="banner p2" tabindex="0">Jogador 2</div>
+      <div class="status">
+        <div class="hp" tabindex="0">HP: <span id="hp2">20</span></div>
+        <div class="energy" tabindex="0">Energia: <span id="en2">3</span></div>
+      </div>
+
+      <div class="zone">
+        <h3 tabindex="0">Mão</h3>
+        <div id="hand2" class="hand" role="list" aria-label="Cartas do Jogador 2"></div>
+      </div>
+
+      <div class="zone">
+        <h3 tabindex="0">Área de código (máx 3 cartas)</h3>
+        <div id="prog2" class="prog" role="list" aria-label="Área de código do Jogador 2"></div>
+        <div id="energy2" class="energy-total"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot" role="contentinfo">
+    <small tabindex="0">
+      Conceitos: sequência, condição (SE), repetição (REPETIR X VEZES), variáveis (VAR).
+    </small>
+  </footer>
+
+  <script src="script.js"></script>
+
+  <!-- 🔊 Script de acessibilidade -->
+  <script>
+    let accessibilityEnabled = false;
+    const switchBtn = document.getElementById("accessibilitySwitch");
+
+    // Narração de texto
+    function speak(text) {
+      if (!accessibilityEnabled) return;
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = "pt-BR";
+      speechSynthesis.cancel(); // interrompe fala anterior
+      speechSynthesis.speak(utter);
+    }
+
+    // Observar alterações no log para narrar novas mensagens
+    const logBox = document.getElementById("log");
+    const observer = new MutationObserver(mutations => {
+      mutations.forEach(m => {
+        m.addedNodes.forEach(node => {
+          if (node.textContent.trim() !== "") speak(node.textContent.trim());
+        });
+      });
+    });
+    observer.observe(logBox, { childList: true });
+
+    // Botão para alternar acessibilidade
+    switchBtn.addEventListener("click", () => {
+      accessibilityEnabled = !accessibilityEnabled;
+      switchBtn.classList.toggle("active", accessibilityEnabled);
+      switchBtn.setAttribute("aria-pressed", accessibilityEnabled);
+      switchBtn.textContent = accessibilityEnabled
+        ? "♿ Acessibilidade: ON"
+        : "♿ Acessibilidade: OFF";
+      speak(accessibilityEnabled
+        ? "Modo acessível ativado. Todas as mensagens serão narradas."
+        : "Modo acessível desativado.");
+    });
+
+    // Fala o turno atual
+    const turnLabel = document.getElementById("turnLabel");
+    const turnObserver = new MutationObserver(() => {
+      speak(turnLabel.textContent);
+    });
+    turnObserver.observe(turnLabel, { childList: true });
+
+    // Acessibilidade via ENTER (executar botão focado)
+    document.addEventListener("keydown", e => {
+      if (e.key === "Enter" && document.activeElement.tagName === "BUTTON") {
+        document.activeElement.click();
+      }
+    });
+  </script>
 </body>
 </html>
