@@ -10,6 +10,7 @@ Cada turno, o jogador gasta **Memória (recurso)** para executar cartas e pode o
 ## 📂 Estrutura do Projeto
 
 code-quest/
+
  │
  
  ├── index.html # Estrutura HTML principal do jogo
@@ -18,8 +19,6 @@ code-quest/
  
  └── script.js # Lógica principal do jogo
 
-yaml
-Copiar código
 
 ---
 
@@ -41,7 +40,7 @@ Derrotar todos os inimigos (“bugs”) antes que o HP do jogador chegue a zero.
 
 As cartas são definidas no objeto `cardLibrary`:
 
-```js
+```
 {
   id: 'attack_5',
   name: 'Patch Rápido',
@@ -66,75 +65,85 @@ Deck inicial
 1× Refatoração Agressiva
 
 1× Sair do Processo
-
-🤖 Sistema de Inimigos
+```
+## 🤖 Sistema de Inimigos
 Os inimigos são definidos no array enemyList, com nome, HP e intenções (ações do inimigo):
 
-js
-Copiar código
+```
 {
   name: 'Lag Spike Repetitivo',
   hp: 40,
   maxHp: 40,
   intent: [{ type: 'attack', value: 6, times: 2 }]
 }
-Tipos de ações
+```
+## Tipos de ações
 attack: causa dano ao jogador
 
 defend: recupera HP ou bloqueio
 
-🔄 Fluxo de Jogo
+## 🔄 Fluxo de Jogo
 1. Inicialização
-Define o estado inicial (gameState)
+> Define o estado inicial (gameState)
+> 
+> Embaralha o deck
+> 
+> Carrega o primeiro inimigo
+> 
+> Inicia o primeiro turno
 
-Embaralha o deck
-
-Carrega o primeiro inimigo
-
-Inicia o primeiro turno
+<br>
 
 2. Turno do jogador
-Incrementa turnos
+> Incrementa turnos
+> 
+> Atualiza memória
+> 
+> Reseta bloqueios e esquivas
+> 
+> Compra 5 cartas
 
-Atualiza memória
-
-Reseta bloqueios e esquivas
-
-Compra 5 cartas
-
+<br>
 3. Jogar cartas (playCard)
-Move carta da mão para a pilha de execução
 
-Subtrai custo da memória
+> Move carta da mão para a pilha de execução
+> 
+> Subtrai custo da memória
+> 
+> Atualiza UI
 
-Atualiza UI
+<br>
 
 4. Desfazer cartas (unplayCard)
-Move carta da pilha de volta para a mão
 
-Restaura memória
-
-Atualiza UI
+> Move carta da pilha de volta para a mão
+> 
+> Restaura memória
+> 
+> Atualiza UI
 
 5. Encerrar turno (endTurn)
-Executa ações da pilha
 
-Executa ações do inimigo
-
-Verifica vitória ou derrota
-
-Descarte automático
+> Executa ações da pilha
+> 
+> Executa ações do inimigo
+> 
+> Verifica vitória ou derrota
+> 
+> Descarte automático
 
 6. Vitória / Derrota
-Vitória: ganha memória permanente ou nova carta
 
-HP parcialmente restaurado
+> Vitória: ganha memória permanente ou nova carta
+> 
+> HP parcialmente restaurado
+> 
+> Derrota reinicia o jogo
 
-Derrota reinicia o jogo
+<br>
 
 🧠 Estrutura de Dados: gameState
-js
-Copiar código
+```
 gameState = {
   player: {
     hp: 50,
@@ -153,38 +162,42 @@ gameState = {
   cardsPlayedCount: 0,
   turn: 0
 }
-🎨 Interface Dinâmica (UI)
-updateUI() atualiza HP, memória, cartas e inimigo
+```
+<br>
 
-renderCards(container, cards, isPlayerHand) cria elementos visuais das cartas
+# 🎨 Interface Dinâmica (UI)
 
-Cliques na mão jogam carta; cliques na pilha desfazem carta
+__updateUI():__ 
+> atualiza HP, memória, cartas e inimigo
 
-🧮 Sistema de Pontuação
-Fator	Peso
-HP restante	até 60 pontos
-Eficiência de jogadas	até 40 pontos
+__renderCards(container, cards, isPlayerHand):__
+> cria elementos visuais das cartas
 
-Pontuação final: 0–100
+Cliques na mão selecionam a carta à ser jogada; cliques na pilha desfazem a seleção
 
-🧰 Extensibilidade
-Possibilidade	Como fazer
-Novas cartas	Adicione objetos ao cardLibrary e implemente efeitos em executePlayerActions()
-Novos inimigos	Insira objetos no array enemyList
-Novos efeitos de status	Amplie gameState.player.status
-Melhorias visuais	Adicione animações CSS nas classes .card, .hp-bar e .hidden
+<br>
 
-🚀 Melhorias Futuras
-Animações de cartas e dano
-
-Novos tipos de cartas (cura, buffs/debuffs)
-
-Sistema de progressão com múltiplos inimigos
-
-Salvamento em localStorage
-
-Estatísticas e histórico de partidas
-
-🏁 Conclusão
-Code Quest é um protótipo funcional de jogo de cartas estratégico, com foco em gerenciamento de recursos e planejamento de ações.
-A arquitetura modular e o uso de objetos para cartas, inimigos e estado do jogo tornam o código legível, expansível e didático.
+# 🧮 Sistema de Pontuação
+<table>
+<tr>
+    <td>Fator</td>
+    <td>Peso</td>
+</tr>
+<tr>
+    <td>
+        HP restante
+    </td>
+    <td>
+        até 60 pontos
+    </td>
+</tr>
+<tr>
+    <td>
+        Eficiência de jogadas
+    </td>
+    <td>
+        até 40 pontos
+    </td>
+</tr>
+</table>
+<h3><u> Pontuação final: 0–100</u></h3>
