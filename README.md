@@ -10,10 +10,10 @@ Cada turno, o jogador gasta **Memória (recurso)** para executar cartas e pode o
 ## 📂 Estrutura do Projeto
 
 code-quest/
-│
-├── index.html # Estrutura HTML principal do jogo
-├── style.css # Estilos visuais
-└── script.js # Lógica principal do jogo
+ │
+ ├── index.html # Estrutura HTML principal do jogo
+ ├── style.css # Estilos visuais
+ └── script.js # Lógica principal do jogo
 
 yaml
 Copiar código
