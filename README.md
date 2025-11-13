@@ -11,8 +11,11 @@ Cada turno, o jogador gasta **Memória (recurso)** para executar cartas e pode o
 
 code-quest/
  │
+ 
  ├── index.html # Estrutura HTML principal do jogo
+ 
  ├── style.css # Estilos visuais
+ 
  └── script.js # Lógica principal do jogo
 
 yaml
