@@ -1,309 +1,123 @@
-:root {
-    --bg: #f2fbff;
-    --card: #ffffff;
-    --accent: #00a3ff;
-    --p1: #ffdede;
-    --p2: #e6f7ff;
-    --text: #113;
-}
-
-* {
-    box-sizing: border-box;
-    font-family: Inter, system-ui, Arial, sans-serif
-}
-
+/* Estilos gerais e tema */
 body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text)
-}
-
-.top {
-    padding: 18px 20px;
-    background: linear-gradient(90deg, var(--accent)22, transparent);
-}
-
-.top h1 {
-    margin: 0;
-    font-size: 20px
-}
-
-.top .subtitle {
-    margin: 6px 0 0;
-    color: #355
-}
-
-
-.board {
-    display: grid;
-    grid-template-columns: 1fr 360px 1fr;
-    gap: 16px;
-    max-width: 1100px;
-    margin: 18px auto;
-    padding: 8px
-}
-
-.player {
-    background: var(--card);
-    padding: 10px;
-    border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06)
-}
-
-.banner {
-    padding: 8px;
-    border-radius: 8px;
-    color: #222;
-    font-weight: 700;
-    margin-bottom: 8px
-}
-
-.banner.p1 {
-    background: linear-gradient(90deg, #fff0f0, #ffdede)
-}
-
-.banner.p2 {
-    background: linear-gradient(90deg, #f0fbff, #e6f7ff)
-}
-
-.status {
+    background-color: #1a1a2e;
+    color: #e0e0e0;
+    font-family: 'Courier New', Courier, monospace;
     display: flex;
-    gap: 12px;
-    font-weight: 600;
-    margin-bottom: 10px
-}
-
-.status .hp {
-    color: #c22
-}
-
-.status .energy {
-    color: #06c
-}
-
-.zone {
-    margin-top: 8px
-}
-
-.hand {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    min-height: 68px
-}
-
-.prog {
-    display: flex;
-    gap: 8px;
-    min-height: 56px;
-    padding: 8px;
-    border-radius: 8px;
-    background: #fbffff;
-    border: 2px dashed #d3f0ff
-}
-
-
-.card {
-    min-width: 86px;
-    padding: 8px;
-    border-radius: 8px;
-    background: #fff;
-    border: 1px solid #e6f0f8;
-    cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.04);
-    font-weight: 700
-}
-
-.card small {
-    display: block;
-    font-weight: 400;
-    color: #667;
-    font-size: 12px
-}
-
-
-.center {
-    display: flex;
-    flex-direction: column;
+    justify-content: center;
     align-items: center;
-    justify-content: flex-start;
-    gap: 12px
+    height: 100vh;
+    margin: 0;
+    overflow: hidden; 
 }
 
-.vs {
-    font-size: 36px;
-    font-weight: 800;
-    color: #666
-}
-
-.controls {
+#game-board {
+    width: 95vw; 
+    height: 95vh; 
+    max-width: 1600px; 
+    max-height: 900px;
+    border: 0.3vmin solid #4f4f8e;
+    background-color: #2a2a4e;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    align-items: center
+    justify-content: space-between;
+    padding: 2vmin; 
+    border-radius: 1.5vmin;
 }
 
-.controls button {
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 0;
-    background: var(--accent);
-    color: #fff;
-    cursor: pointer
-}
+/* Áreas principais */
+#enemy-area { height: 25%; display: flex; flex-direction: column; justify-content: space-between; }
+#player-area { height: 45%; display: flex; flex-direction: column; justify-content: space-between; }
+#play-area { flex-grow: 1; border: 0.2vmin dashed #4f4f8e; border-radius: 1vmin; padding: 1vmin; display: flex; flex-direction: column; }
+#enemy-area, #player-area { padding: 1.5vmin; border-radius: 1vmin; background-color: rgba(0, 0, 0, 0.2); }
 
-#turnLabel {
-    font-weight: 700
-}
+/* Títulos das áreas */
+h2 { font-size: 2.5vmin; margin: 0 0 1vmin 0; }
+#play-area h3 { font-size: 2.2vmin; margin: 0 0 1vmin 0; text-align: center; }
 
+/* Estilos das Cartas */
+.card-container { display: flex; gap: 1.5vmin; justify-content: center; align-items: center; height: 100%; flex-grow: 1; }
 
-.logbox {
-    width: 320px
-}
-
-.log {
-    height: 300px;
-    overflow: auto;
-    background: #fff;
-    padding: 8px;
-    border-radius: 8px;
-    border: 1px solid #e7f5ff
-}
-
-.log div {
-    margin-bottom: 6px;
-    font-size: 14px
-}
-
-
-.foot {
-    text-align: center;
-    padding: 8px;
-    color: #445
-}
-
-.player {
-    transition: filter 0.5s ease;
-}
-
-.player .status-bar {
-    transition: visibility 0.3s ease, opacity 0.3s ease;
-}
-
-.player[style*="blur"] {
-    opacity: 0.4;
-}
-
-
-@media(max-width:1000px) {
-    .board {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* ====== ACESSIBILIDADE ====== */
-#accessibilitySwitch {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 6px 10px;
-  background: #444;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  z-index: 1000;
-}
-
-#accessibilitySwitch.active {
-  background: #2a8;
-}
-
-/* Destaque para foco via TAB */
-.card:focus,
-button:focus {
-  outline: 3px solid #4caf50;
-  outline-offset: 3px;
-}
-
-/* Efeito de desfoque e bloqueio */
-.blurred {
-  filter: blur(4px);
-  opacity: 0.4;
-  pointer-events: none;
-}
-
-/* Transições suaves */
-.player {
-  transition: filter 0.4s ease, opacity 0.4s ease;
-}
-
-/* Contraste melhorado */
-.status,
-.controls,
-.logbox {
-  color: #000;
-}
-
-/* Ocultar elementos temporariamente */
-.hidden {
-  display: none !important;
-}
-
-
-/* ======= feedback visual de foco/hover/seleção ======= */
-.card.focused {
-  outline: 3px solid #4caf50;
-  outline-offset: 3px;
-  transform: translateY(-3px);
-  box-shadow: 0 10px 24px rgba(0,0,0,0.12);
-}
-
-.card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.08);
-}
-
-.card.selected {
-  border: 2px solid #0b76ff;
-  background: linear-gradient(180deg,#f0fbff,#fff);
-  transform: translateY(-2px) scale(1.02);
-}
-
-/* caixa de preview (estilização extra) */
-#cardPreviewBox {
-  font-size: 14px;
-  color: #123;
-}
-
-.card.in-prog {
-  background: linear-gradient(180deg, #fffdf5, #fff6e0);
-  border: 2px dashed #ffa726;
-}
-
-.energy-badge {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #0078ff;
-  color: white;
-  font-size: 12px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
 .card {
-  position: relative; /* necessário para posicionar a bolinha dentro */
+    /* ANTES: width: 10vmin; height: 14vmin; */
+    width: 12vmin;  /* AUMENTADO */
+    height: 16.8vmin; /* AUMENTADO (mantendo proporção 1:1.4) */
+    background-color: #2c3e50;
+    border: 0.3vmin solid #7f8c8d;
+    border-radius: 1.2vmin;
+    padding: 1.2vmin;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0.4vmin 0.4vmin 0.6vmin rgba(0,0,0,0.5);
+    position: relative;
+}
+.card:hover { transform: translateY(-1.5vmin); box-shadow: 0px 1.2vmin 1.8vmin rgba(127, 255, 212, 0.3); border-color: #82aaff; }
+
+.card-name {
+    /* ANTES: font-size: 1.5vmin; */
+    font-size: 1.8vmin; /* AUMENTADO */
+    font-weight: bold;
+    color: #82aaff;
 }
 
-.energy-total {
-  margin-top: 6px;
-  text-align: right;
-  font-weight: bold;
-  color: #444;
+.card-cost {
+    top: 1vmin; right: 1vmin;
+    width: 3.5vmin; height: 3.5vmin;
+    font-size: 1.8vmin; /* AUMENTADO */
+    background-color: #f1c40f; color: #2c3e50; border-radius: 50%;
+    display: flex; justify-content: center; align-items: center; font-weight: bold;
 }
+
+.card-description {
+    /* ANTES: font-size: 1.2vmin; */
+    font-size: 1.5vmin; /* AUMENTADO */
+    background-color: rgba(0,0,0,0.3); padding: 0.8vmin; border-radius: 0.5vmin;
+    flex-grow: 1; margin-top: 1.2vmin;
+}
+
+/* Barras de HP e outros elementos da UI */
+.hp-bar-container { width: 100%; height: 3vmin; background-color: #555; border-radius: 1.2vmin; position: relative; margin-top: 0.5vmin; }
+.hp-bar { width: 100%; height: 100%; background-color: #2ecc71; border-radius: 1.2vmin; transition: width 0.5s ease-in-out; }
+.hp-bar-container span { position: absolute; width: 100%; text-align: center; color: white; font-weight: bold; font-size: 1.8vmin; /* AUMENTADO */ }
+
+#enemy-intent {
+    /* ALTERADO PARA MAIOR DESTAQUE */
+    margin-top: 1vmin;
+    padding: 1.5vmin;
+    background-color: rgba(231, 76, 60, 0.4);
+    border: 0.2vmin solid rgba(231, 76, 60, 0.9);
+    border-radius: 0.8vmin;
+    text-align: center;
+    min-height: 4vmin;
+    font-size: 2.2vmin; /* AUMENTADO SIGNIFICATIVAMENTE */
+    font-weight: bold; /* DESTAQUE */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    text-shadow: 1px 1px 3px #000;
+}
+
+#deck-info { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5vmin; }
+#deck-info p { font-size: 2vmin; }
+#end-turn-btn { padding: 1.5vmin 3vmin; font-size: 2vmin; /* AUMENTADO */ font-family: 'Courier New', Courier, monospace; background-color: #f1c40f; color: #1a1a2e; border: none; border-radius: 0.8vmin; cursor: pointer; font-weight: bold; }
+#end-turn-btn:hover { background-color: #f39c12; }
+
+/* Estilos da tela de vitória (Modal) */
+.hidden { display: none !important; }
+#victory-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+.modal-content { background-color: #2a2a4e; padding: 4vmin; width: 50vw; max-width: 600px; min-width: 320px; border-radius: 1vmin; border: 0.3vmin solid #82aaff; text-align: center; box-shadow: 0px 0px 3vmin rgba(127, 255, 212, 0.4); }
+.modal-buttons { margin-top: 2vmin; display: flex; justify-content: space-around; }
+#score-display { font-size: 2.2vmin; color: #f1c40f; margin-top: 1.5vmin; min-height: 2.5vmin; }
+.modal-buttons button { padding: 1.5vmin 3vmin; font-size: 2vmin; font-family: 'Courier New', Courier, monospace; border: none; border-radius: 0.8vmin; cursor: pointer; font-weight: bold; }
+#continue-btn { background-color: #2ecc71; color: #1a1a2e; }
+#exit-btn, #restart-btn { background-color: #e74c3c; color: white; }
+
+#special-reward-display { margin-top: 2vmin; padding: 1.5vmin; background-color: rgba(241, 196, 15, 0.1); border: 0.15vmin solid #f1c40f; border-radius: 1vmin; }
+#special-reward-display h4 { margin-top: 0; color: #f1c40f; text-transform: uppercase; font-size: 2vmin; }
+#special-reward-display p { font-size: 1.8vmin; }
+#add-upgrade-btn { padding: 1.2vmin 2vmin; font-size: 1.8vmin; margin-top: 1vmin; background-color: #8e44ad; color: white; border: none; border-radius: 0.6vmin; cursor: pointer; font-weight: bold; }
+#add-upgrade-btn:hover { background-color: #9b59b6; }

@@ -1,444 +1,426 @@
-// --- Acessibilidade extra: preview, Enter nas cartas, e fala segura ---
-/**
- * showPreview(card): mostra um box de pré-visualização na área de controles
- * clearPreview(): remove
- * safeSpeak(text): chama speak(text) somente se a função existir (definida no HTML)
- */
-
-function safeSpeak(text) {
-  if (typeof speak === 'function') {
-    try { speak(text); } catch (e) { /* falha silenciosa */ }
-  }
-}
-
-const controlsEl = document.querySelector('.controls') || document.body;
-
-let previewBox = document.getElementById('cardPreviewBox');
-if (!previewBox) {
-  previewBox = document.createElement('div');
-  previewBox.id = 'cardPreviewBox';
-  previewBox.setAttribute('aria-hidden', 'true');
-  previewBox.style.minWidth = '200px';
-  previewBox.style.padding = '8px';
-  previewBox.style.borderRadius = '8px';
-  previewBox.style.background = 'rgba(255,255,255,0.95)';
-  previewBox.style.border = '1px solid rgba(0,0,0,0.08)';
-  previewBox.style.boxShadow = '0 6px 18px rgba(0,0,0,0.06)';
-  previewBox.style.marginTop = '8px';
-  previewBox.style.fontSize = '13px';
-  previewBox.style.display = 'none';
-  controlsEl.appendChild(previewBox);
-}
-
-function showPreview(card) {
-  if (!card) return;
-  previewBox.innerHTML = `<strong>${card.label}</strong><div style="font-size:13px;color:#445;margin-top:4px">${card.desc}</div>`;
-  previewBox.style.display = 'block';
-  previewBox.setAttribute('aria-hidden', 'false');
-}
-
-function clearPreview() {
-  previewBox.style.display = 'none';
-  previewBox.setAttribute('aria-hidden', 'true');
-}
-
-// permitir ENTER nas cartas (quando focadas)
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    const active = document.activeElement;
-    if (active && active.classList && active.classList.contains('card')) {
-      active.click();
-      e.preventDefault();
-    }
-  }
-});
-
-
-
-
-// Código do jogo: Código de Batalha! — Edição Didática
-// Dois jogadores locais. Cada turno: montar até 3 cartas, executar (interpretador simples).
-
-const MAX_HAND = 5;
-const MAX_PROG = 3;
-const START_HP = 20;
-const START_ENERGY = 3;
-
-let state = {
-  deck: [],
-  discard: [],
-  hands: [[], []],
-  progs: [[], []],
-  hp: [START_HP, START_HP],
-  energy: [START_ENERGY, START_ENERGY],
-  defense: [0, 0], // 🛡️ acumula o número de defesas ativas por jogador
-  defenseTurns: [0, 0], // 🛡️ contador de turnos desde a última defesa
-  turn: 0
-};
-
-const CARD_TYPES = [
-  { id: 'atacar', label: 'ATACAR', cost: 1, desc: 'Causa 3 de dano.', energy: 1 },
-  { id: 'defender', label: 'DEFENDER', cost: 1, desc: 'Aumenta sua defesa cumulativamente por 2 turnos.', energy: 1 },
-  { id: 'curar', label: 'CURAR', cost: 2, desc: 'Restaura 4 de HP.', energy: 2 },
-  { id: 'sehp', label: 'SE VIDA < 10 ENTÃO 3X', cost: 0, desc: 'Se sua vida < 10, executa a próxima carta 3 vezes.', energy: 0 },
-  { id: 'repetir2', label: 'REPETIR 2X', cost: 0, desc: 'Repete a próxima carta 2 vezes.', energy: 0 },
-  { id: 'varforca', label: 'VAR FORÇA = 2', cost: 0, desc: 'Define a força para 2 (modifica ATACAR).', energy: 0 },
-  { id: 'erro', label: 'ERRO', cost: 0, desc: 'Carta de erro: cancela a próxima carta se o oponente a usar.', energy: 0 }
-];
-
-// helpers de DOM
-const qs = sel => document.querySelector(sel);
-const qsa = sel => Array.from(document.querySelectorAll(sel));
-
-const el = {
-  hand1: qs('#hand1'), hand2: qs('#hand2'),
-  prog1: qs('#prog1'), prog2: qs('#prog2'),
-  log: qs('#log'),
-  hp1: qs('#hp1'), hp2: qs('#hp2'),
-  en1: qs('#en1'), en2: qs('#en2'),
-  turnLabel: qs('#turnLabel'), runBtn: qs('#runBtn'), clearBtn: qs('#clearBtn'), endBtn: qs('#endBtn')
-};
-
-function log(msg) {
-  const d = document.createElement('div');
-  d.textContent = msg;
-  el.log.prepend(d);
-}
-
-function buildDeck() {
-  const deck = [];
-  for (let i = 0; i < 8; i++) deck.push({ ...CARD_TYPES[0] });
-  for (let i = 0; i < 6; i++) deck.push({ ...CARD_TYPES[1] });
-  for (let i = 0; i < 5; i++) deck.push({ ...CARD_TYPES[2] });
-  for (let i = 0; i < 3; i++) deck.push({ ...CARD_TYPES[3] });
-  for (let i = 0; i < 3; i++) deck.push({ ...CARD_TYPES[4] });
-  for (let i = 0; i < 2; i++) deck.push({ ...CARD_TYPES[5] });
-  for (let i = 0; i < 2; i++) deck.push({ ...CARD_TYPES[6] });
-  return deck;
-}
-
-function shuffle(a) {
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-}
-
-function draw(n = 1) {
-  const out = [];
-  for (let i = 0; i < n; i++) {
-    if (state.deck.length === 0) {
-      state.deck = state.discard.splice(0);
-      shuffle(state.deck);
-      log('Embaralhando descarte de volta ao deck.');
-      if (state.deck.length === 0) break;
-    }
-    out.push(state.deck.pop());
-  }
-  return out;
-}
-
-function startGame() {
-  state.deck = buildDeck();
-  shuffle(state.deck);
-  state.discard = [];
-  state.hands = [[], []];
-  state.progs = [[], []];
-  state.hp = [START_HP, START_HP];
-  state.energy = [START_ENERGY, START_ENERGY];
-  state.defense = [0, 0]; // 🛡️ resetar defesa
-  state.defenseTurns = [0, 0]; // 🛡️ resetar contador
-  state.turn = 0;
-  state.hands[0] = draw(MAX_HAND);
-  state.hands[1] = draw(MAX_HAND);
-  renderAll();
-  log('Jogo iniciado! Jogador 1 começa.');
-}
-
-function createCardElement(card, playerIndex) {
-  const div = document.createElement('div');
-  div.className = 'card';
-  div.tabIndex = 0;
-  div.setAttribute('role', 'button');
-  div.setAttribute('aria-label', `Carta: ${card.label}. ${card.desc}. Custo de energia: ${card.energy}`);
-
-  // adiciona a bolinha de custo no canto superior direito
-  div.innerHTML = `
-    <div class="energy-badge">${card.energy}</div>
-    <strong>${card.label}</strong>
-    <small>${card.desc}</small>
-  `;
-
-  // Função de seleção (clique ou ENTER)
-  const selectCard = () => {
-    if (state.turn === playerIndex) {
-      if (state.progs[playerIndex].length < MAX_PROG) {
-        state.progs[playerIndex].push(card);
-        const idx = state.hands[playerIndex].indexOf(card);
-        if (idx >= 0) state.hands[playerIndex].splice(idx, 1);
-        renderAll();
-        speak(`Carta ${card.label} selecionada. Energia total atualizada.`);
-      } else {
-        log('Área cheia — máximo 3 cartas.');
-        speak('Área cheia. Máximo de três cartas.');
-      }
-    } else {
-      log('Não é seu turno.');
-      speak('Não é seu turno.');
-    }
+document.addEventListener('DOMContentLoaded', () => {
+  // --- 1. DEFINIÇÃO DE DADOS EXPANDIDA ---
+  const cardLibrary = {
+      'attack_5': { id: 'attack_5', name: 'Patch Rápido', cost: 1, type: 'action', value: 5, description: 'Causa 5 de dano.' },
+      'attack_12': { id: 'attack_12', name: 'Refatoração Agressiva', cost: 2, type: 'action', value: 12, description: 'Causa 12 de dano.' },
+      'defend_8': { id: 'defend_8', name: 'Firewall Básico', cost: 1, type: 'action', value: 8, description: 'Ganha 8 de bloqueio.' },
+      'defend_15': { id: 'defend_15', name: 'Firewall Avançado', cost: 2, type: 'action', value: 15, description: 'Ganha 15 de bloqueio.' },
+      'exit_process': { id: 'exit_process', name: 'Sair do Processo', cost: 1, type: 'utility', description: 'Esquiva de todos os ataques neste turno.' },
+      'mem_upgrade': { id: 'mem_upgrade', name: 'Overclock de RAM', cost: 1, type: 'permanent_upgrade', description: 'Aumenta sua Memória Máxima em 1 a 3 pontos. Esta carta é removida do jogo após o uso.' },
+      // NOVA CARTA DE CURA
+      'heal_structural': { id: 'heal_structural', name: 'Correção Estrutural', cost: 2, type: 'utility', description: 'Recupera de 3 a 8 pontos de vida.'}
   };
 
-  div.onclick = selectCard;
-  div.onkeypress = e => { if (e.key === 'Enter') selectCard(); };
+  const enemyList = [ /* ... (sem alterações aqui) ... */ ];
+  let gameState;
 
-  // Feedback ao focar ou passar o mouse
-  div.onfocus = () => speak(`Carta: ${card.label}. ${card.desc}. Custa ${card.energy} de energia.`);
-  div.onmouseover = () => speak(`Carta: ${card.label}. ${card.desc}. Custa ${card.energy} de energia.`);
+  // --- 2. ELEMENTOS DO DOM --- (sem alterações aqui)
 
-  return div;
-}
-
-
-
-
-function renderPlayer(playerIndex) {
-  const handEl = playerIndex === 0 ? el.hand1 : el.hand2;
-  const progEl = playerIndex === 0 ? el.prog1 : el.prog2;
-  const energyEl = playerIndex === 0 ? document.getElementById('energy1') : document.getElementById('energy2');
-
-  handEl.innerHTML = '';
-  progEl.innerHTML = '';
-  let totalEnergy = 0;
-
-  state.hands[playerIndex].forEach(c => handEl.appendChild(createCardElement(c, playerIndex)));
+  // --- 3. FUNÇÕES PRINCIPAIS DO JOGO ---
+  function initializeGame() {
+      gameState = {
+          player: {
+              hp: 50, maxHp: 50, memory: 0, maxMemory: 3, block: 0,
+              deck: [], hand: [], discard: [], exhausted: [],
+              status: { isDodging: false }
+          },
+          currentEnemyIndex: 0, cardsPlayedCount: 0, turn: 0
+      };
+      // DECK INICIAL REBALANCEADO
+      gameState.player.deck = [
+          'attack_5', 'attack_5', 'attack_5', 'attack_5', 'attack_5','attack_5', 'attack_5', 'attack_5', 'attack_5', 'attack_5',
+          'defend_8', 'defend_8', 'defend_8', 'defend_8',
+          'attack_12', 'defend_15',
+          'exit_process',     // Apenas uma cópia, tornando-a rara
+          'heal_structural'   // Apenas uma cópia, tornando-a rara
+      ];
+      shuffleDeck(gameState.player.deck);
+      loadEnemy();
+      startTurn();
+      // ... (resto da função sem alterações)
+  }
   
-  state.progs[playerIndex].forEach((c, idx) => {
-    const d = document.createElement('div');
-    d.className = 'card';
-    d.innerHTML = `
-      <div class="energy-cost">${c.energy}</div>
-      <strong>${c.label}</strong>
-      <small>${c.desc}</small>
-    `;
-    d.onclick = () => {
-      if (state.turn === playerIndex) {
-        state.hands[playerIndex].push(c);
-        state.progs[playerIndex].splice(idx, 1);
-        renderAll();
-      }
-    };
-    progEl.appendChild(d);
-    totalEnergy += c.energy;
-  });
+  // ... (loadEnemy sem alterações) ...
 
-  energyEl.textContent = `Energia total: ${totalEnergy}`;
-}
-
-
-
-function renderAll() {
-  renderPlayer(0);
-  renderPlayer(1);
-  el.hp1.textContent = state.hp[0];
-  el.hp2.textContent = state.hp[1];
-  el.en1.textContent = state.energy[0];
-  el.en2.textContent = state.energy[1];
-  el.turnLabel.textContent = `Turno: Jogador ${state.turn + 1}`;
-  toggleVisibility();
-}
-
-function toggleVisibility() {
-  const p1 = document.getElementById('player1');
-  const p2 = document.getElementById('player2');
-  if (!p1 || !p2) return;
-
-  // os contêineres de status no seu HTML têm a classe "status"
-  const p1Status = p1.querySelector('.status');
-  const p2Status = p2.querySelector('.status');
-
-  if (state.turn === 0) {
-    // Jogador 1 ativo
-    p1.classList.remove('blurred');
-    p1.style.pointerEvents = 'auto';
-    if (p1Status) { p1Status.style.visibility = 'visible'; p1Status.style.opacity = '1'; }
-
-    p2.classList.add('blurred');
-    p2.style.pointerEvents = 'none';
-    if (p2Status) { p2Status.style.visibility = 'hidden'; p2Status.style.opacity = '0'; }
-  } else {
-    // Jogador 2 ativo
-    p2.classList.remove('blurred');
-    p2.style.pointerEvents = 'auto';
-    if (p2Status) { p2Status.style.visibility = 'visible'; p2Status.style.opacity = '1'; }
-
-    p1.classList.add('blurred');
-    p1.style.pointerEvents = 'none';
-    if (p1Status) { p1Status.style.visibility = 'hidden'; p1Status.style.opacity = '0'; }
+  function startTurn() {
+      gameState.turn++;
+      gameState.player.memory += gameState.player.maxMemory;
+      const memoryCap = 10 + gameState.turn;
+      if (gameState.player.memory > memoryCap) { gameState.player.memory = memoryCap; }
+      gameState.player.block = 0;
+      gameState.player.status.isDodging = false;
+      gameState.executionStack = [];
+      drawCards(5);
+      updateUI();
   }
-}
 
+  // ... (endTurn sem alterações) ...
 
-
-
-function applyDamage(targetIndex, dmg) {
-  // 🛡️ aplicar defesa acumulada
-  const reduction = state.defense[targetIndex] * 0.5; // cada defesa reduz 50% adicional (1 defesa = -50%, 2 defesas = -75%)
-  const finalDamage = Math.ceil(dmg * Math.max(0, 1 - reduction));
-  state.hp[targetIndex] = Math.max(0, state.hp[targetIndex] - finalDamage);
-  log(`Jogador ${targetIndex + 1} recebeu ${finalDamage} de dano (${dmg} original, defesa x${state.defense[targetIndex]}).`);
-}
-
-function interpretProgram(playerIndex) {
-  const ops = state.progs[playerIndex].map(c => c.id);
-  const result = { actions: [], usedEnergy: 0 };
-  let varForca = 1;
-
-  for (let i = 0; i < ops.length; i++) {
-    const op = ops[i];
-    if (op === 'varforca') {
-      varForca = 2;
-      log('Variável: Força definida para 2.');
-    } else if (op === 'atacar') {
-      const cost = 1;
-      result.usedEnergy += cost;
-      const dmg = 3 * varForca;
-      result.actions.push({ type: 'damage', target: 1 - playerIndex, amount: dmg });
-      log(`ATACAR -> prepara ${dmg} de dano.`);
-    } else if (op === 'defender') {
-      const cost = 1;
-      result.usedEnergy += cost;
-      result.actions.push({ type: 'defend', target: playerIndex });
-      log('DEFENDER -> acumula defesa.');
-    } else if (op === 'curar') {
-      const cost = 2;
-      result.usedEnergy += cost;
-      result.actions.push({ type: 'heal', target: playerIndex, amount: 4 });
-      log('CURAR -> prepara cura de 4 HP.');
-    } else if (op === 'sehp') {
-      const next = ops[i + 1];
-      if (state.hp[playerIndex] < 10 && next) {
-        log('SE VIDA < 10: condição verdadeira — executando próxima carta 3 vezes.');
-        for (let r = 0; r < 3; r++) {
-          if (next === 'atacar') {
-            result.usedEnergy += 1;
-            const dmg = 3 * varForca;
-            result.actions.push({ type: 'damage', target: 1 - playerIndex, amount: dmg });
-          } else if (next === 'curar') {
-            result.usedEnergy += 2;
-            result.actions.push({ type: 'heal', target: playerIndex, amount: 4 });
-          } else if (next === 'defender') {
-            result.usedEnergy += 1;
-            result.actions.push({ type: 'defend', target: playerIndex });
+  function executePlayerActions() {
+      for (const card of gameState.executionStack) {
+          if (card.type === 'action') {
+              if (card.name.includes('Patch') || card.name.includes('Refatoração')) { gameState.enemy.hp -= card.value; } 
+              else if (card.name.includes('Firewall')) { gameState.player.block += card.value; }
+          } 
+          else if (card.type === 'utility') {
+              if (card.id === 'exit_process') { gameState.player.status.isDodging = true; }
+              // LÓGICA DA NOVA CARTA DE CURA
+              if (card.id === 'heal_structural') {
+                  const healAmount = Math.floor(Math.random() * 6) + 3; // Cura de 3 a 8
+                  gameState.player.hp += healAmount;
+                  // Garante que a vida não ultrapasse o máximo
+                  if(gameState.player.hp > gameState.player.maxHp) {
+                      gameState.player.hp = gameState.player.maxHp;
+                  }
+              }
+          } 
+          else if (card.type === 'permanent_upgrade') {
+              const memoryBoost = Math.floor(Math.random() * 3) + 1;
+              gameState.player.maxMemory += memoryBoost;
           }
-        }
+      }
+  }
+  
+  // ... (executeEnemyAction, checkGameEnd, e outras funções auxiliares sem alterações até renderCards) ...
+  
+  // --- FUNÇÕES DE INTERAÇÃO COM CARTAS ---
+  
+  function playCard(card) {
+      if (gameState.player.memory >= card.cost) {
+          gameState.player.memory -= card.cost;
+          gameState.cardsPlayedCount++;
+          const cardIndex = gameState.player.hand.findIndex(c => c.id === card.id);
+          // Pega a carta exata da mão e a remove
+          const [playedCard] = gameState.player.hand.splice(cardIndex, 1);
+          gameState.executionStack.push(playedCard);
+          updateUI();
       } else {
-        log('SE VIDA < 10: condição falsa — próxima carta ignorada.');
-        i++; // pular a próxima carta
+          alert("Memória insuficiente!");
       }
-    } else if (op === 'repetir2') {
-      const next = ops[i + 1];
-      if (next) {
-        log('REPETIR 2X: repetindo próxima carta 2 vezes.');
-        for (let r = 0; r < 2; r++) {
-          if (next === 'atacar') {
-            result.usedEnergy += 1;
-            const dmg = 3 * varForca;
-            result.actions.push({ type: 'damage', target: 1 - playerIndex, amount: dmg });
-          } else if (next === 'curar') {
-            result.usedEnergy += 2;
-            result.actions.push({ type: 'heal', target: playerIndex, amount: 4 });
+  }
+
+  // NOVA FUNÇÃO PARA DESFAZER A JOGADA
+  function unplayCard(cardIndex) {
+      // Pega a carta da pilha de execução e a remove
+      const [cardToReturn] = gameState.executionStack.splice(cardIndex, 1);
+      
+      // Devolve a carta para a mão do jogador
+      gameState.player.hand.push(cardToReturn);
+
+      // Retorna a memória gasta
+      gameState.player.memory += cardToReturn.cost;
+      
+      // Decrementa o contador de cartas jogadas
+      gameState.cardsPlayedCount--;
+
+      // Atualiza a interface
+      updateUI();
+  }
+
+  // --- ATUALIZAÇÃO DA INTERFACE ---
+
+  // ... (updateUI sem alterações) ...
+
+  function renderCards(container, cards, isPlayerHand) {
+      container.innerHTML = '';
+      // Passamos o índice para a função de callback
+      cards.forEach((card, index) => {
+          const cardEl = document.createElement('div');
+          cardEl.className = 'card';
+          cardEl.innerHTML = `<div class="card-name">${card.name}</div><div class="card-cost">${card.cost}</div><div class="card-description">${card.description}</div>`;
+          
+          // ALTERADO: Adiciona a função correta dependendo de onde a carta está
+          if (isPlayerHand) {
+              // Se está na mão, a função é playCard
+              cardEl.onclick = () => playCard(card);
+          } else {
+              // Se está na pilha de execução, a função é unplayCard, passando o índice
+              cardEl.onclick = () => unplayCard(index);
           }
-        }
+          container.appendChild(cardEl);
+      });
+  }
+
+  // --- 7. INICIALIZAÇÃO E EVENT LISTENERS ---
+  // (O resto do arquivo não precisa de alterações)
+});
+// COPIE E COLE O RESTO DO SEU ARQUIVO JS A PARTIR DAQUI
+// ... (O código restante, como initializeGame() no final, permanece o mesmo)
+
+document.addEventListener('DOMContentLoaded', () => {
+  // --- 1. DEFINIÇÃO DE DADOS EXPANDIDA ---
+
+  const cardLibrary = {
+      'attack_5': { id: 'attack_5', name: 'Patch Rápido', cost: 1, type: 'action', value: 5, description: 'Causa 5 de dano.' },
+      'attack_12': { id: 'attack_12', name: 'Refatoração Agressiva', cost: 2, type: 'action', value: 12, description: 'Causa 12 de dano.' },
+      'defend_8': { id: 'defend_8', name: 'Firewall Básico', cost: 1, type: 'action', value: 8, description: 'Ganha 8 de bloqueio.' },
+      'defend_15': { id: 'defend_15', name: 'Firewall Avançado', cost: 2, type: 'action', value: 15, description: 'Ganha 15 de bloqueio.' },
+      'exit_process': { id: 'exit_process', name: 'Sair do Processo', cost: 1, type: 'utility', description: 'Esquiva de todos os ataques inimigos neste turno.' },
+      'mem_upgrade': { id: 'mem_upgrade', name: 'Overclock de RAM', cost: 1, type: 'permanent_upgrade', description: 'Aumenta sua Memória Máxima em 1 a 3 pontos. Esta carta é removida do jogo após o uso.' }
+  };
+
+  const enemyList = [
+      { name: 'Lag Spike Repetitivo', hp: 40, maxHp: 40, intent: [{ type: 'attack', value: 6, times: 2 }] },
+      { name: 'Firewall Corrompido', hp: 60, maxHp: 60, intent: [{ type: 'defend', value: 10 }, { type: 'attack', value: 8 }] },
+      { name: 'Processo Fantasma', hp: 50, maxHp: 50, intent: [{ type: 'attack', value: 18 }] },
+      { name: 'Bug Mestre', hp: 100, maxHp: 100, intent: [{ type: 'attack', value: 8 }, { type: 'defend', value: 8 }, { type: 'attack', value: 8 }] }
+  ];
+
+  let gameState;
+
+  // --- 2. ELEMENTOS DO DOM ---
+  const playerHpText = document.getElementById('player-hp-text'), playerHpBar = document.getElementById('player-hp-bar');
+  const memoryText = document.getElementById('memory-text'), playerHandDiv = document.getElementById('player-hand');
+  const deckCountText = document.getElementById('deck-count'), enemyName = document.getElementById('enemy-name');
+  const enemyHpText = document.getElementById('enemy-hp-text'), enemyHpBar = document.getElementById('enemy-hp-bar');
+  const enemyIntentDiv = document.getElementById('enemy-intent'), executionStackDiv = document.getElementById('execution-stack');
+  const endTurnBtn = document.getElementById('end-turn-btn');
+  const victoryScreen = document.getElementById('victory-screen'), victoryTitle = document.getElementById('victory-title');
+  const scoreDisplay = document.getElementById('score-display'), continueBtn = document.getElementById('continue-btn');
+  const exitBtn = document.getElementById('exit-btn'), restartBtn = document.getElementById('restart-btn');
+  const specialRewardDisplay = document.getElementById('special-reward-display');
+  const rewardText = document.getElementById('reward-text');
+  const addUpgradeBtn = document.getElementById('add-upgrade-btn');
+
+  // --- 3. FUNÇÕES PRINCIPAIS DO JOGO ---
+
+  function initializeGame() {
+      gameState = {
+          player: {
+              hp: 50, maxHp: 50,
+              // ALTERAÇÃO 1: Começamos com 0 de memória para que o primeiro turno adicione a quantidade correta.
+              memory: 0, maxMemory: 3,
+              block: 0,
+              deck: [], hand: [], discard: [], exhausted: [],
+              status: { isDodging: false }
+          },
+          currentEnemyIndex: 0, cardsPlayedCount: 0, turn: 0 // Turno começa em 0 para a lógica funcionar
+      };
+      gameState.player.deck = [ 'attack_5', 'attack_5', 'attack_5', 'attack_5', 'defend_8', 'defend_8', 'defend_8', 'defend_15', 'exit_process', 'attack_12' ];
+      shuffleDeck(gameState.player.deck);
+      loadEnemy();
+      startTurn();
+      victoryScreen.classList.add('hidden');
+      restartBtn.classList.add('hidden');
+      exitBtn.classList.remove('hidden');
+      continueBtn.classList.remove('hidden');
+      scoreDisplay.textContent = '';
+  }
+
+  function loadEnemy() {
+      const enemyData = enemyList[gameState.currentEnemyIndex];
+      gameState.enemy = JSON.parse(JSON.stringify(enemyData));
+  }
+  
+  function startTurn() {
+      gameState.turn++; // Incrementa o turno no início
+      // ALTERAÇÃO 2: Em vez de resetar, somamos a memória máxima à que sobrou.
+      gameState.player.memory += gameState.player.maxMemory;
+      
+      // Adicionando um limite para a memória não acumular infinitamente
+      const memoryCap = 10;
+      if (gameState.player.memory > memoryCap) {
+          gameState.player.memory = memoryCap;
       }
-      i++;
-    } else if (op === 'erro') {
-      log('ERRO: próxima carta cancelada.');
-      i++;
-    }
-  }
-  return result;
-}
 
-function executeTurn() {
-  const p = state.turn;
-  const program = state.progs[p];
-  if (program.length === 0) {
-    log('Programação vazia — nenhuma ação executada.');
-    return endTurn();
+      gameState.player.block = 0;
+      gameState.player.status.isDodging = false;
+      gameState.executionStack = [];
+      drawCards(5);
+      updateUI();
   }
 
-  const interp = interpretProgram(p);
+  function endTurn() {
+      executePlayerActions();
+      if (gameState.enemy.hp > 0) { executeEnemyAction(); }
+      checkGameEnd();
+      
+      if (gameState.player.hp > 0 && gameState.enemy.hp > 0) {
+          const handToDiscard = gameState.player.hand.map(c => c.id);
+          gameState.player.discard.push(...handToDiscard);
+          gameState.player.hand = [];
 
-  if (interp.usedEnergy > state.energy[p]) {
-    log('Energia insuficiente — parte do código será ignorada.');
+          const stackToDiscard = gameState.executionStack.filter(c => c.type !== 'permanent_upgrade').map(c => c.id);
+          const stackToExhaust = gameState.executionStack.filter(c => c.type === 'permanent_upgrade').map(c => c.id);
+          gameState.player.discard.push(...stackToDiscard);
+          gameState.player.exhausted.push(...stackToExhaust);
+
+          startTurn();
+      }
   }
 
-  interp.actions.forEach(act => {
-    if (act.type === 'damage') applyDamage(act.target, act.amount);
-    else if (act.type === 'heal') {
-      state.hp[act.target] = Math.min(START_HP, state.hp[act.target] + act.amount);
-      log(`Jogador ${act.target + 1} recuperou ${act.amount} de HP.`);
-    } else if (act.type === 'defend') {
-      state.defense[act.target]++; // 🛡️ acumula defesa
-      state.defenseTurns[act.target] = 0; // 🛡️ zera o contador de duração
-      log(`Jogador ${act.target + 1} aumentou a defesa para ${state.defense[act.target]}.`);
-    }
-  });
-
-  state.energy[p] = Math.max(0, state.energy[p] - Math.min(interp.usedEnergy, state.energy[p]));
-  state.discard.push(...state.progs[p]);
-  state.progs[p] = [];
-
-  renderAll();
-
-  if (state.hp[1 - p] <= 0) {
-    log(`Jogador ${p + 1} venceu a batalha!`);
-    alert(`🎉 Jogador ${p + 1} venceu!`);
-    startGame();
-    return;
+  function executePlayerActions() {
+      for (const card of gameState.executionStack) {
+          if (card.type === 'action') {
+              if (card.name.includes('Patch') || card.name.includes('Refatoração')) { gameState.enemy.hp -= card.value; } 
+              else if (card.name.includes('Firewall')) { gameState.player.block += card.value; }
+          } else if (card.type === 'utility' && card.id === 'exit_process') {
+              gameState.player.status.isDodging = true;
+          } 
+          else if (card.type === 'permanent_upgrade') {
+              const memoryBoost = Math.floor(Math.random() * 3) + 1;
+              gameState.player.maxMemory += memoryBoost;
+          }
+      }
   }
 
-  endTurn();
-}
-
-function endTurn() {
-  const current = state.turn;
-  const next = 1 - current;
-
-  // 🛡️ atualizar duração da defesa
-  state.defenseTurns[current]++;
-  if (state.defenseTurns[current] >= 2) {
-    state.defense[current] = 0;
-    log(`Defesa do Jogador ${current + 1} expirou.`);
+  function executeEnemyAction() {
+      gameState.enemy.intent.forEach(action => {
+          if (action.type === 'attack') {
+              let damage = action.value * (action.times || 1);
+              if (gameState.player.status.isDodging) { damage = 0; }
+              const damageToPlayer = Math.max(0, damage - gameState.player.block);
+              gameState.player.hp -= damageToPlayer;
+          } else if (action.type === 'defend') {
+              gameState.enemy.hp = Math.min(gameState.enemy.maxHp, gameState.enemy.hp + action.value);
+          }
+      });
+  }
+  
+  function checkGameEnd() {
+      if (gameState.enemy.hp <= 0) { showVictoryScreen(); } 
+      else if (gameState.player.hp <= 0) {
+          alert('Você foi derrotado! O sistema caiu.');
+          initializeGame();
+      }
   }
 
-  state.turn = next;
-  state.energy[next] = Math.min(START_ENERGY, state.energy[next] + 1);
+  // --- 4. FUNÇÕES DE RECOMPENSA E PONTUAÇÃO ---
 
-  while (state.hands[next].length < MAX_HAND) {
-    const d = draw(1);
-    if (d.length === 0) break;
-    state.hands[next].push(...d);
+  function showVictoryScreen() {
+      specialRewardDisplay.classList.add('hidden');
+      addUpgradeBtn.classList.add('hidden');
+
+      if (Math.random() < 0.3) {
+          grantRandomReward();
+      }
+      
+      victoryScreen.classList.remove('hidden');
+      if (gameState.currentEnemyIndex >= enemyList.length - 1) {
+          victoryTitle.textContent = "TODOS OS BUGS FORAM CORRIGIDOS!";
+          continueBtn.classList.add('hidden');
+          exitBtn.textContent = "Ver Pontuação Final";
+      }
   }
 
-  log(`Agora é o turno do Jogador ${next + 1}.`);
-  renderAll();
-}
+  function grantRandomReward() {
+      specialRewardDisplay.classList.remove('hidden');
+      const memoryBoost = Math.floor(Math.random() * 2) + 1;
 
-// Botões
-el.runBtn.addEventListener('click', () => {
-  if (state.turn !== null) executeTurn();
+      if (Math.random() < 0.5) {
+          rewardText.textContent = `Você otimizou o sistema e encontrou um Módulo de RAM! Sua Memória Máxima aumentou em ${memoryBoost}.`;
+          gameState.player.maxMemory += memoryBoost;
+      } else {
+          rewardText.textContent = `Você encontrou uma brecha para um Overclock de RAM! Adicione uma carta de upgrade permanente ao seu baralho.`;
+          addUpgradeBtn.classList.remove('hidden');
+      }
+  }
+  
+  function handleAddUpgrade() {
+      gameState.player.deck.push('mem_upgrade');
+      shuffleDeck(gameState.player.deck);
+      rewardText.textContent = "Carta 'Overclock de RAM' adicionada ao seu baralho!";
+      addUpgradeBtn.classList.add('hidden');
+      updateUI();
+  }
+
+  function handleContinue() {
+      victoryScreen.classList.add('hidden');
+      gameState.currentEnemyIndex++;
+      loadEnemy();
+      gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + 15);
+      startTurn();
+  }
+
+  function handleExit() {
+      const score = calculateScore();
+      scoreDisplay.textContent = `Sua pontuação final: ${score} / 100`;
+      continueBtn.classList.add('hidden');
+      exitBtn.classList.add('hidden');
+      restartBtn.classList.remove('hidden');
+      specialRewardDisplay.classList.add('hidden');
+  }
+
+  function calculateScore() {
+      const hpPercent = gameState.player.hp / gameState.player.maxHp;
+      const hpScore = Math.round(hpPercent * 60);
+      const expectedCards = (gameState.currentEnemyIndex + 1) * 8;
+      const actionScore = Math.max(0, 40 - (gameState.cardsPlayedCount - expectedCards) * 2);
+      return Math.max(0, Math.min(100, hpScore + actionScore));
+  }
+
+  // --- 5. FUNÇÕES AUXILIARES ---
+
+  function shuffleDeck(deck) {
+      for (let i = deck.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+  }
+
+  function drawCards(amount) {
+      for (let i = 0; i < amount; i++) {
+          if (gameState.player.hand.length >= 10) break;
+          if (gameState.player.deck.length === 0) {
+              if (gameState.player.discard.length === 0) break;
+              gameState.player.deck = gameState.player.discard;
+              gameState.player.discard = [];
+              shuffleDeck(gameState.player.deck);
+          }
+          const cardId = gameState.player.deck.pop();
+          gameState.player.hand.push(cardLibrary[cardId]);
+      }
+  }
+
+  function playCard(card) {
+      if (gameState.player.memory >= card.cost) {
+          gameState.player.memory -= card.cost;
+          gameState.cardsPlayedCount++;
+          const cardIndex = gameState.player.hand.findIndex(c => c.id === card.id);
+          gameState.player.hand.splice(cardIndex, 1);
+          gameState.executionStack.push(card);
+          updateUI();
+      } else {
+          alert("Memória insuficiente!");
+      }
+  }
+
+  // --- 6. FUNÇÃO DE ATUALIZAÇÃO DA INTERFACE (UI) ---
+
+  function updateUI() {
+      playerHpText.textContent = `${Math.max(0, gameState.player.hp)} / ${gameState.player.maxHp}`;
+      playerHpBar.style.width = `${(gameState.player.hp / gameState.player.maxHp) * 100}%`;
+      memoryText.textContent = `${gameState.player.memory} / ${gameState.player.maxMemory}`;
+      deckCountText.textContent = gameState.player.deck.length;
+
+      if (gameState.enemy) {
+          enemyName.textContent = gameState.enemy.name;
+          enemyHpText.textContent = `${Math.max(0, gameState.enemy.hp)} / ${gameState.enemy.maxHp}`;
+          enemyHpBar.style.width = `${(gameState.enemy.hp / gameState.enemy.maxHp) * 100}%`;
+          enemyIntentDiv.innerHTML = gameState.enemy.intent.map(action => `<span>${action.type.toUpperCase()}: ${action.value}${action.times > 1 ? ` (x${action.times})` : ''}</span>`).join(' | ');
+      }
+      
+      renderCards(playerHandDiv, gameState.player.hand, true);
+      renderCards(executionStackDiv, gameState.executionStack, false);
+  }
+  
+  function renderCards(container, cards, isPlayerHand) {
+      container.innerHTML = '';
+      cards.forEach(card => {
+          const cardEl = document.createElement('div');
+          cardEl.className = 'card';
+          cardEl.innerHTML = `<div class="card-name">${card.name}</div><div class="card-cost">${card.cost}</div><div class="card-description">${card.description}</div>`;
+          if (isPlayerHand) { cardEl.onclick = () => playCard(card); }
+          container.appendChild(cardEl);
+      });
+  }
+
+  // --- 7. INICIALIZAÇÃO E EVENT LISTENERS ---
+  endTurnBtn.addEventListener('click', endTurn);
+  continueBtn.addEventListener('click', handleContinue);
+  exitBtn.addEventListener('click', handleExit);
+  restartBtn.addEventListener('click', initializeGame);
+  addUpgradeBtn.addEventListener('click', handleAddUpgrade);
+  
+  initializeGame();
 });
-el.clearBtn.addEventListener('click', () => {
-  state.progs[state.turn] = [];
-  renderAll();
-});
-el.endBtn.addEventListener('click', () => {
-  log('Jogador passou o turno.');
-  endTurn();
-});
-
-// Inicialização
-startGame();
-
-console.log('Dica: cada carta é uma instrução. A ordem e a lógica mudam o resultado. Explique sequência, condição e repetição.');
