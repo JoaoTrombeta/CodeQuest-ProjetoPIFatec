@@ -8,6 +8,21 @@
 </head>
 <body>
 
+    <nav id="game-navbar">
+        <div class="nav-left">
+            <div class="accessibility-control">
+                <span class="switch-label" id="accessibility-label-text">Acessibilidade:</span>
+                <label class="switch" for="accessibility-toggle" title="Alternar modo de acessibilidade (leitor de tela e navegação por teclado)">
+                    <input type="checkbox" id="accessibility-toggle" aria-labelledby="accessibility-label-text">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+        <div class="nav-right">
+            <button id="help-btn" title="Manual de Instruções">?</button>
+        </div>
+    </nav>
+
     <div id="game-board">
         <div id="enemy-area">
             <div id="enemy-info">
@@ -17,16 +32,12 @@
                     <span id="enemy-hp-text">100 / 100</span>
                 </div>
             </div>
-            <div id="enemy-intent">
-                </div>
+            <div id="enemy-intent"></div>
         </div>
-
         <div id="play-area">
-            <h3>Pilha de Execução</h3>
-            <div id="execution-stack" class="card-container">
-                </div>
+            <h3>Pilha de Execução (Clique para devolver)</h3>
+            <div id="execution-stack" class="card-container"></div>
         </div>
-
         <div id="player-area">
             <div id="player-info">
                 <h2>Você</h2>
@@ -38,8 +49,7 @@
                     Memória: <span id="memory-text">3 / 3</span>
                 </div>
             </div>
-            <div id="player-hand" class="card-container">
-                </div>
+            <div id="player-hand" class="card-container"></div>
             <div id="deck-info">
                 <button id="end-turn-btn">Finalizar Turno</button>
                 <p>Deck: <span id="deck-count">30</span></p>
@@ -61,6 +71,21 @@
                 <button id="exit-btn">Sair e Ver Pontuação</button>
                 <button id="restart-btn" class="hidden">Jogar Novamente</button>
             </div>
+        </div>
+    </div>
+
+    <div id="help-modal" class="hidden">
+        <div class="modal-content">
+            <button id="close-help-btn" class="close-btn">&times;</button>
+            <h3>Como Jogar Code Quest</h3>
+            <ul>
+                <li><strong>Objetivo:</strong> Derrote os "bugs" (inimigos) zerando o HP deles.</li>
+                <li><strong>Memória (RAM):</strong> É o seu recurso para jogar cartas. Você ganha o seu máximo de Memória no início de cada turno (e o que sobrou acumula).</li>
+                <li><strong>Mão:</strong> Você compra 5 cartas a cada turno.</li>
+                <li><strong>Pilha de Execução:</strong> Clique nas cartas da sua mão para movê-las à "Pilha de Execução". Elas ainda não foram usadas!</li>
+                <li><strong>Desfazer:</strong> Clique em uma carta na "Pilha de Execução" para devolvê-la à sua mão e recuperar a Memória gasta.</li>
+                <li><strong>Finalizar Turno:</strong> Quando estiver pronto, clique em "Finalizar Turno". Todas as cartas na Pilha de Execução serão ativadas em ordem.</li>
+            </ul>
         </div>
     </div>
 

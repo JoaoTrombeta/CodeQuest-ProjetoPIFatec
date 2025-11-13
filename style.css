@@ -3,19 +3,43 @@ body {
     background-color: #1a1a2e;
     color: #e0e0e0;
     font-family: 'Courier New', Courier, monospace;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
     margin: 0;
     overflow: hidden; 
+    /* CORREÇÃO: Usa flex column para empilhar a navbar e o jogo */
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Ocupa a tela inteira */
+}
+
+/* =================================== */
+/* === NAVBAR CORRIGIDA === */
+/* =================================== */
+#game-navbar {
+    /* REMOVIDO: position: absolute; */
+    width: 100%; /* Ocupa a largura inteira */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+    background-color: #1a1a2e; /* Cor de fundo para a barra */
+    padding: 1vmin; /* Espaçamento interno */
+    box-sizing: border-box; /* Impede que o padding aumente a largura */
+    border-bottom: 0.2vmin solid #4f4f8e; /* Linha divisória */
+}
+#game-navbar > div {
+    display: flex;
+    align-items: center;
+    gap: 1.5vmin;
+    padding: 0 1.5vmin;
 }
 
 #game-board {
-    width: 95vw; 
-    height: 95vh; 
-    max-width: 1600px; 
-    max-height: 900px;
+    /* REMOVIDO: height: 95vh; width: 95vw; padding-top: 7vh; */
+    /* ADICIONADO: flex-grow: 1 para ocupar o espaço restante */
+    flex-grow: 1;
+    width: 98%;
+    max-width: 1600px;
+    margin: 1vh auto; /* Centraliza e dá uma margem */
     border: 0.3vmin solid #4f4f8e;
     background-color: #2a2a4e;
     display: flex;
@@ -23,6 +47,8 @@ body {
     justify-content: space-between;
     padding: 2vmin; 
     border-radius: 1.5vmin;
+    box-sizing: border-box; /* Importante para o layout */
+    overflow: hidden; /* Garante que nada saia do tabuleiro */
 }
 
 /* Áreas principais */
@@ -37,11 +63,9 @@ h2 { font-size: 2.5vmin; margin: 0 0 1vmin 0; }
 
 /* Estilos das Cartas */
 .card-container { display: flex; gap: 1.5vmin; justify-content: center; align-items: center; height: 100%; flex-grow: 1; }
-
 .card {
-    /* ANTES: width: 10vmin; height: 14vmin; */
-    width: 12vmin;  /* AUMENTADO */
-    height: 16.8vmin; /* AUMENTADO (mantendo proporção 1:1.4) */
+    width: 12vmin;
+    height: 16.8vmin;
     background-color: #2c3e50;
     border: 0.3vmin solid #7f8c8d;
     border-radius: 1.2vmin;
@@ -56,68 +80,73 @@ h2 { font-size: 2.5vmin; margin: 0 0 1vmin 0; }
 }
 .card:hover { transform: translateY(-1.5vmin); box-shadow: 0px 1.2vmin 1.8vmin rgba(127, 255, 212, 0.3); border-color: #82aaff; }
 
-.card-name {
-    /* ANTES: font-size: 1.5vmin; */
-    font-size: 1.8vmin; /* AUMENTADO */
-    font-weight: bold;
-    color: #82aaff;
-}
+.card-name { font-size: 1.8vmin; font-weight: bold; color: #82aaff; transition: font-size 0.2s ease; }
+.card-cost { position: absolute; top: 1vmin; right: 1vmin; width: 3.5vmin; height: 3.5vmin; font-size: 1.8vmin; background-color: #f1c40f; color: #2c3e50; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; transition: font-size 0.2s ease; }
+.card-description { font-size: 1.5vmin; background-color: rgba(0,0,0,0.3); padding: 0.8vmin; border-radius: 0.5vmin; flex-grow: 1; margin-top: 1.2vmin; transition: font-size 0.2s ease; }
 
-.card-cost {
-    top: 1vmin; right: 1vmin;
-    width: 3.5vmin; height: 3.5vmin;
-    font-size: 1.8vmin; /* AUMENTADO */
-    background-color: #f1c40f; color: #2c3e50; border-radius: 50%;
-    display: flex; justify-content: center; align-items: center; font-weight: bold;
-}
-
-.card-description {
-    /* ANTES: font-size: 1.2vmin; */
-    font-size: 1.5vmin; /* AUMENTADO */
-    background-color: rgba(0,0,0,0.3); padding: 0.8vmin; border-radius: 0.5vmin;
-    flex-grow: 1; margin-top: 1.2vmin;
-}
-
-/* Barras de HP e outros elementos da UI */
+/* Barras de HP e UI */
 .hp-bar-container { width: 100%; height: 3vmin; background-color: #555; border-radius: 1.2vmin; position: relative; margin-top: 0.5vmin; }
 .hp-bar { width: 100%; height: 100%; background-color: #2ecc71; border-radius: 1.2vmin; transition: width 0.5s ease-in-out; }
-.hp-bar-container span { position: absolute; width: 100%; text-align: center; color: white; font-weight: bold; font-size: 1.8vmin; /* AUMENTADO */ }
-
-#enemy-intent {
-    /* ALTERADO PARA MAIOR DESTAQUE */
-    margin-top: 1vmin;
-    padding: 1.5vmin;
-    background-color: rgba(231, 76, 60, 0.4);
-    border: 0.2vmin solid rgba(231, 76, 60, 0.9);
-    border-radius: 0.8vmin;
-    text-align: center;
-    min-height: 4vmin;
-    font-size: 2.2vmin; /* AUMENTADO SIGNIFICATIVAMENTE */
-    font-weight: bold; /* DESTAQUE */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #fff;
-    text-shadow: 1px 1px 3px #000;
-}
-
+.hp-bar-container span { position: absolute; width: 100%; text-align: center; color: white; font-weight: bold; font-size: 1.8vmin; transition: font-size 0.2s ease; }
+#enemy-intent { margin-top: 1vmin; padding: 1.5vmin; background-color: rgba(231, 76, 60, 0.4); border: 0.2vmin solid rgba(231, 76, 60, 0.9); border-radius: 0.8vmin; text-align: center; min-height: 4vmin; font-size: 2.2vmin; font-weight: bold; display: flex; justify-content: center; align-items: center; color: #fff; text-shadow: 1px 1px 3px #000; }
 #deck-info { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5vmin; }
 #deck-info p { font-size: 2vmin; }
-#end-turn-btn { padding: 1.5vmin 3vmin; font-size: 2vmin; /* AUMENTADO */ font-family: 'Courier New', Courier, monospace; background-color: #f1c40f; color: #1a1a2e; border: none; border-radius: 0.8vmin; cursor: pointer; font-weight: bold; }
+#end-turn-btn { padding: 1.5vmin 3vmin; font-size: 2vmin; font-family: 'Courier New', Courier, monospace; background-color: #f1c40f; color: #1a1a2e; border: none; border-radius: 0.8vmin; cursor: pointer; font-weight: bold; }
 #end-turn-btn:hover { background-color: #f39c12; }
 
-/* Estilos da tela de vitória (Modal) */
+/* Modais (Vitória e Ajuda) */
 .hidden { display: none !important; }
-#victory-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-.modal-content { background-color: #2a2a4e; padding: 4vmin; width: 50vw; max-width: 600px; min-width: 320px; border-radius: 1vmin; border: 0.3vmin solid #82aaff; text-align: center; box-shadow: 0px 0px 3vmin rgba(127, 255, 212, 0.4); }
-.modal-buttons { margin-top: 2vmin; display: flex; justify-content: space-around; }
-#score-display { font-size: 2.2vmin; color: #f1c40f; margin-top: 1.5vmin; min-height: 2.5vmin; }
-.modal-buttons button { padding: 1.5vmin 3vmin; font-size: 2vmin; font-family: 'Courier New', Courier, monospace; border: none; border-radius: 0.8vmin; cursor: pointer; font-weight: bold; }
-#continue-btn { background-color: #2ecc71; color: #1a1a2e; }
-#exit-btn, #restart-btn { background-color: #e74c3c; color: white; }
+#victory-screen, #help-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+.modal-content { background-color: #2a2a4e; padding: 4vmin; width: 50vw; max-width: 600px; min-width: 320px; border-radius: 1vmin; border: 0.3vmin solid #82aaff; text-align: left; box-shadow: 0px 0px 3vmin rgba(127, 255, 212, 0.4); position: relative; }
+#victory-screen .modal-content { text-align: center; }
+.close-btn { position: absolute; top: 1vmin; right: 1.5vmin; font-size: 3.5vmin; font-weight: bold; color: #e0e0e0; background: none; border: none; cursor: pointer; }
+.close-btn:hover { color: #f1c40f; }
+#help-modal h3 { font-size: 2.5vmin; color: #f1c40f; text-align: center; margin-top: 0; }
+#help-modal ul { list-style-type: none; padding-left: 0; }
+#help-modal li { font-size: 1.8vmin; margin-bottom: 1.5vmin; line-height: 1.4; }
+#help-modal li strong { color: #82aaff; margin-right: 0.5vmin; }
 
-#special-reward-display { margin-top: 2vmin; padding: 1.5vmin; background-color: rgba(241, 196, 15, 0.1); border: 0.15vmin solid #f1c40f; border-radius: 1vmin; }
-#special-reward-display h4 { margin-top: 0; color: #f1c40f; text-transform: uppercase; font-size: 2vmin; }
-#special-reward-display p { font-size: 1.8vmin; }
-#add-upgrade-btn { padding: 1.2vmin 2vmin; font-size: 1.8vmin; margin-top: 1vmin; background-color: #8e44ad; color: white; border: none; border-radius: 0.6vmin; cursor: pointer; font-weight: bold; }
-#add-upgrade-btn:hover { background-color: #9b59b6; }
+/* Botão de Ajuda */
+#help-btn {
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    font-size: 2.5vmin;
+    width: 4.5vmin;
+    height: 4.5vmin;
+    border-radius: 50%;
+    border: 0.2vmin solid #f1c40f;
+    background-color: #2a2a4e;
+    color: #f1c40f;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+#help-btn:hover { background-color: #f1c40f; color: #2a2a4e; }
+
+/* Switch de Acessibilidade */
+/* CORREÇÃO: Novo container para o label e o switch */
+.accessibility-control {
+    display: flex;
+    align-items: center;
+    gap: 0.8vmin; /* Espaço entre o texto e o switch */
+}
+.switch-label { font-size: 1.8vmin; font-weight: bold; color: #e0e0e0; }
+.switch { position: relative; display: inline-block; width: 6vmin; height: 3.4vmin; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .4s; }
+.slider:before { position: absolute; content: ""; height: 2.6vmin; width: 2.6vmin; left: 0.4vmin; bottom: 0.4vmin; background-color: white; transition: .4s; }
+.slider.round { border-radius: 3.4vmin; }
+.slider.round:before { border-radius: 50%; }
+input:checked + .slider { background-color: #2ecc71; }
+input:focus + .slider { box-shadow: 0 0 1px #2ecc71; }
+input:checked + .slider:before { transform: translateX(2.6vmin); }
+
+/* Regras de Acessibilidade (Fontes) */
+body.accessibility-mode .card-name { font-size: 2.2vmin; font-weight: bold; }
+body.accessibility-mode .card-cost { font-size: 2.2vmin; }
+body.accessibility-mode .card-description { font-size: 1.8vmin; font-weight: bold; }
+body.accessibility-mode .hp-bar-container span,
+body.accessibility-mode #enemy-intent,
+body.accessibility-mode #deck-info p,
+body.accessibility-mode #player-memory,
+body.accessibility-mode #play-area h3,
+body.accessibility-mode h2 { font-size: 2.5vmin; font-weight: bold; }
